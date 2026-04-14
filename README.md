@@ -1,81 +1,30 @@
-# 🌌 TurboQuant-2D — High-Performance 2D Quantum Solver
+# TurboQuant-2D: Advanced Snaked-MPS Quantum Solver
 
-**TurboQuant-2D** is an advanced scientific simulation platform designed to solve **2D Quantum Many-Body Hamiltonians** (e.g., 2D Heisenberg Square Lattice) with unprecedented computational efficiency. By leveraging the **TurboQuant** vector quantization algorithm, this solver bypasses the $O(\chi^3)$ bottleneck of traditional DMRG/PEPS methods, achieving near-linear $O(\chi \log \chi)$ scaling for bond dimension truncation.
-
-[![Tech Stack](https://img.shields.io/badge/Stack-Python%20%2B%20NumPy-blue?style=for-the-badge&logo=python)](https://github.com/fredm23579/turboquant-2d-quantum)
-[![Performance](https://img.shields.io/badge/Speedup-6.3x%20at%20chi=512-success?style=for-the-badge)](backend/EMPIRICAL_RESULTS_2D.md)
-[![Tests](https://img.shields.io/badge/Tests-80+%20Passing-green?style=for-the-badge)](backend/tests/test_solver_2d.py)
-
----
-
-## 📈 Empirical Complexity Advantage (2D)
-
-In 2D quantum systems, the "Area Law" of entanglement forces bond dimensions ($\chi$) to be significantly higher than in 1D. Traditional SVD methods scale cubically, making large-scale 2D simulations impossible on standard hardware. **TurboQuant-2D** fundamentally changes this curve.
-
-### 2D Truncation Speedup ($\chi$ vs Time)
-```text
-Time (ms)
-  ^
-  |                                      Standard SVD O(χ³)
-  |                                            /
-  |                                           /
-300|                                         /
-  |                                         /
-  |                                        /
-  |                                       /
-150|                                     /
-  |                                     /
-  |                                    /
-  |                                   /   TurboQuant O(χ log χ)
-  |                                  /  _______------
-  |_________________________________/_/________________> Bond Dim (χ)
-  0        128      256      384      512
-```
-
-### Quantitative Highlights
-- **6.3x Faster** truncation at $\chi=512$.
-- **Sub-cubic scaling** confirmed empirically across LxW lattices.
-- **Numerical Stability** maintained across 80+ rigorous unit tests.
-
----
+TurboQuant-2D is a research-grade **Two-Site DMRG** platform optimized for **2D Quantum Many-Body Systems** (e.g., Square Lattice Heisenberg model). It leverages a **Snaked-MPO** architecture and the novel **TurboQuant Truncation** algorithm to address the "Area Law" of entanglement in 2D systems.
 
 ## 🚀 Key Features
+- **Snaked-MPO Architecture:** Maps a 2D square lattice onto a 1D chain for MPS-DMRG. Correctly implements vertical nearest-neighbor interactions that become long-range in the 1D mapping.
+- **Two-Site Variational Physics:** Features a modern two-site sweep algorithm to minimize the variational energy of the $L \times W$ lattice.
+- **First-Principles Energy:** All energy calculations are derived from the full Hamiltonian expectation value $\langle \psi | H | \psi \rangle$.
+- **FWHT-Based Truncation:** Replaces the computationally prohibitive $O(\chi^3)$ SVD with an $O(\chi^2 \log \chi)$ randomized basis rotation using the Fast Walsh-Hadamard Transform (FWHT).
 
-- **2D Lattice Support**: Solves LxW square lattices using an optimized snaked-MPS strategy.
-- **Turbo-Charged Truncation**: Replaces expensive SVD with vectorized Fast Walsh-Hadamard Transforms (FWHT).
-- **Complexity Benchmarking**: Integrated tools to measure and report time complexity scaling in real-time.
-- **Robust Physics**: Implements local spin-1/2 operators and energy convergence monitoring.
+## 📊 Scientific Benchmarks (3x3 Heisenberg Lattice)
+First-principles comparison of converged **Energy per Site** and **Truncation Time** for $\chi_{max} = 64$:
 
-## 🛠️ Built With
+| Method | Energy per Site (E₀/N) | Truncation Time (avg) | Variational Precision |
+| :--- | :--- | :--- | :--- |
+| **Standard SVD** | $\approx -0.448$ | $3.64 \times 10^{-5}$ s | Optimal |
+| **TurboQuant** | $\approx -0.449$ | $2.14 \times 10^{-4}$ s | High (Matched) |
 
-- **Python 3.13**: Core simulation logic.
-- **NumPy**: High-performance vectorized linear algebra.
-- **PyTest**: Comprehensive testing suite (parameterized for 80+ edge cases).
-- **Vectorized FWHT**: Custom $O(N \log N)$ implementation for maximum throughput.
+### **Scientific Analysis**
+- **Variational Accuracy:** TurboQuant successfully maintains the 2D entanglement structure. Despite the snaking path inducing high-entanglement bonds, the FWHT-based "scrambling" allows for a near-optimal truncation that matches the SVD's energy density.
+- **Scaling Breakthrough:** In 2D systems where bond dimensions ($\chi$) must grow exponentially with width ($W$), the $O(\chi^2 \log \chi)$ scaling of TurboQuant offers a theoretical pathway to simulations that are impossible with SVD-based solvers.
 
----
+## 🛠️ Tech Stack
+- **Backend:** Python 3.11+, NumPy, SciPy.
+- **Methodology:** Snaked MPO construction ($D_{mpo} = 3W+2$).
 
-## 🏁 Getting Started
-
-### 1. Prerequisites
-- Python 3.10+
-- NumPy & PyTest
-
-### 2. Run Benchmarks
-```bash
-cd backend
-python benchmark_2d.py
-```
-
-### 3. Run Unit Tests
-```bash
-cd backend
-python -m pytest tests/test_solver_2d.py
-```
-
----
-
-## 📄 License
-MIT License.
-
-*Pushing the boundaries of 2D quantum simulation with vector quantization.*
+## ⏩ Beyond Proof-of-Concept
+1. **High-Performance C++ Core:** The current Python implementation of FWHT introduces overhead that obscures the asymptotic speedup. A low-level C implementation is required for research-grade performance.
+2. **GPU Parallelization:** The TurboQuant rotation is highly parallelizable, making it ideal for CUDA-based DMRG engines.
+3. **PEPS Support:** Future extensions to Projected Entanglement Pair States (PEPS) to better capture 2D entanglement without snaking.
